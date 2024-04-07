@@ -1,0 +1,39 @@
+#ifndef LCD_EXTRA_H_
+#define LCD_EXTRA_H_
+#include "../../lib/STD.h"
+const u8 ExtraChar[] =  //32*1
+    {
+        0x04, //1
+        0x0E,    //1
+        0x15,
+        0x04,
+        0x04,
+        0x04,
+        0x04,
+        0x04,
+        0x00,
+        0x00,
+        0x0A,
+        0x00,
+        0x11,
+        0x11,
+        0x0E,
+        0x00,
+        0x00,
+        0x00,
+        0x0A,
+        0x00,
+        0x0E,
+        0x11,
+        0x11,
+        0x00, 
+        0x04,
+        0x04,
+        0x1F,
+        0x04,
+        0x04,
+        0x00,
+        0x1F,
+        0x00};
+
+#endif /* LCD_EXTRA_H_ */

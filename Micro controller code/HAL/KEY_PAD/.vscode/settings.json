@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "key_pad_config.h": "c",
+        "gpio.h": "c"
+    }
+}
