@@ -13,7 +13,7 @@ The system architecture consists of the following components:
 ## Simulation Image (Proteus)
 *Insert simulation image here*
 
-![Proteus Simulation](images\Untitled.png)
+![Proteus Simulation](images/Untitled.png)
 
 ## Model Actions
 The reinforcement machine learning model takes input from the microcontrollers and generates actions based on the states received. The following images illustrate the actions taken by the model:
@@ -26,13 +26,13 @@ The reinforcement machine learning model takes input from the microcontrollers a
 1. Actions 1
    *Insert image of action 1 here*
 
-   ![Actions 1](images\Actions1.png)
+   ![Actions 1](images/Actions1.png)
 
 
 2. Actions 2
    *Insert image of action 2 here*
 
-   ![Actions 2](images\Actions2.png)
+   ![Actions 2](images/Actions2.png)
 
    
 ## How to Run the Project
