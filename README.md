@@ -8,7 +8,7 @@ The system models a city grid with multiple traffic light nodes. Each node repre
 
 ### System Architecture
 
-![System Architecture Diagram](documentation\final_version.gif)
+![System Architecture Diagram](documentation/final_version.gif)
 
 *Diagram illustrating the embedded I2C network and communication flow between microcontrollers and the RL model, facilitated by UART.*
 
