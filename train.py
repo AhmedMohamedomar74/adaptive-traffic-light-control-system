@@ -13,9 +13,6 @@ import torch.optim as optim
 import torch.nn.functional as F
 import torch.nn as nn
 import matplotlib.pyplot as plt
-import traci
-import time
-
 
 # we need to import python modules from the $SUMO_HOME/tools directory
 if "SUMO_HOME" in os.environ:
@@ -27,78 +24,110 @@ else:
 from sumolib import checkBinary  # noqa
 import traci  # noqa
 
-def generate_random_number():
-    return random.randint(0, 15)
-
-def delay_ms(milliseconds):
-    time.sleep(milliseconds / 1000.0)
-
-def Read_From_MC(port='COM2', baud_rate=9600, number=0):
-    def send_start_flag(ser):
-        ser.write(b'S')  # Send start flag as a byte
-        # delay_ms(10)     # Send number that represent Index of the junction
-        ser.write(number.to_bytes(1, byteorder='big'))  # Send number as a byte
-
-    def receive_data_length(ser):
-        length = ser.read(1)  # Read 1 byte for the data length
-        return int.from_bytes(length, byteorder='big')
-
-    def receive_data(ser, length):
-        data = ser.read(length)  # Read the specified number of bytes for data
-        return [int(byte) for byte in data]
+def request_array(array_id, port, baud_rate):
+    """
+    Function to request an array from a microcontroller over a serial connection.
     
-    def replace_characters(data_list):
-        replacements = {'@': 16, '?': 15, '>': 14, '=': 13, '<': 12, ';': 11, ':': 10}
-        replaced_list = [replacements.get(str(value), value) for value in data_list]
-        return replaced_list
+    Parameters:
+        array_id (int): The number representing the array to receive (e.g., 1 or 2).
+        port (str): The serial port (e.g., 'COM_PORT') to connect to.
+        baud_rate (int): The baud rate for the serial connection (e.g., 9600).
+    
+    Returns:
+        list: A list containing the array data.
+    """
+    # Establish a serial connection
+    ser = serial.Serial(port, baud_rate, timeout=0.1)
     
     try:
-        with serial.Serial(port, baud_rate, timeout=0.1) as ser:
-            send_start_flag(ser)
-            # time.sleep(1)  # Wait for Arduino to process and respond
-
-            data_length = receive_data_length(ser)
-            print(f"Received data length: {data_length} bytes")
-
-            if data_length != 4:
-                print("Error: Invalid data length received")
-                return None
-            else:
-                received_data = receive_data(ser, data_length)
-                # Perform additional processing based on the 'number' argument
-                # processed_data = received_data * number
-                # print(f"Received data: {received_data}")
-                # delay_ms(15)
-                return replace_characters(received_data)
-                
-
-    except serial.SerialException as e:
-        print(f"Error: {e}")
-        return None
-
-
-def send_data_to_arduino(data_list, arduino_port, baud_rate):
-    try:
-        # Open a serial connection to the Arduino
-        ser = serial.Serial(arduino_port, baud_rate, timeout=1)
-        print(f"Connected to Arduino on {arduino_port}.")
-
-        # Convert the list to a string and send it to the Arduino
-        data_string = ','.join(map(str, data_list))
-        ser.write(data_string.encode())
-        print(f"Sent data to Arduino: {data_list}")
-
-        # Close the serial connection
-        ser.close()
-
+        # Send the 'R' start flag and the array ID
+        request_arr = bytes([ord('R') , array_id ])
+        # ser.write(b'R')
+        # ser.write(bytes(array_id))
+        ser.write(request_arr)
+        # Read the length of the array (one byte)
+        time.sleep(0.2)  # Allow some time for ESP32 to respond
+        length = ser.read(1)
+        if length:
+            length = ord(length)  # Convert byte to int
+            
+            # Read the array data
+            array_data = ser.read(length)
+            
+            # Create a list with the array data
+            array_list = list(array_data)
+            return array_list
+        
+        else:
+            # Return None if array length could not be read
+            print("Failed to receive the array length.")
+            return None
+    
     except Exception as e:
         print(f"Error: {e}")
+        return None
+    
+    finally:
+        # Clean up and close the serial connection
+        time.sleep(0.5)
+        ser.close()
+
+def Send_variable(action_id,action, port, baud_rate):
+    """
+    Function to send a variable to a microcontroller over a serial connection.
+    
+    Parameters:
+        action_id (int): The identifier for the action to be triggered (e.g., 1 or 2).
+        action (int): The action value to send.
+        port (str): The serial port (e.g., 'COM7') to connect to.
+        baud_rate (int): The baud rate for the serial connection (e.g., 9600).
+    
+    Returns:
+        None: This function does not return any data.
+    """
+    # Establish a serial connection
+    ser = serial.Serial(port, baud_rate, timeout=0.1)
+    
+    try:
+        # Send the 'W' start flag and the action ID
+        request_arr = bytes([ord('W') , action_id ,action])
+        ser.write(request_arr)
+        time.sleep(0.2)  # Allow some time for ESP32 to respond
+        # Send variable without ecnoding
+        # ser.write(bytes(action))
+        
+    
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+    finally:
+        # Clean up and close the serial connection
+        time.sleep(0.5)
+        ser.close()
+
+def send_data_over_serial(com_port: str, baudrate: int, data_list: list):
+    # Initialize the serial port connection
+    with serial.Serial(com_port, baudrate) as ser:
+        print(f"Connected to {com_port} at baud rate {baudrate}")
+
+        # Convert the data_list to a comma-separated string
+        data_string = ','.join(map(str, data_list))
+
+        # Send the data string over the serial port followed by a newline character
+        ser.write((data_string + '\n').encode('utf-8'))
+        
+        print(f"Sent: {data_string}")
+
+    print("Transmission completed.")
 
 def get_vehicle_numbers(lanes):
     vehicle_per_lane = dict()
-    received_data = ser.read(4)
-    vehicle_per_lane = list(received_data)
-    # print(vehicle_per_lane)
+    for l in lanes:
+        vehicle_per_lane[l] = 0
+        for k in traci.lane.getLastStepVehicleIDs(l):
+            if traci.vehicle.getLanePosition(k) > 10:
+                vehicle_per_lane[l] += 1
     return vehicle_per_lane
 
 
@@ -109,62 +138,11 @@ def get_waiting_time(lanes):
     return waiting_time
 
 
-def get_CO2Emission(lanes):
-    CO2Emissio_value = 0
-    for lane in lanes:
-        CO2Emissio_value += traci.lane.getCO2Emission(lane)
-    return CO2Emissio_value
-
-
 def phaseDuration(junction, phase_time, phase_state):
     traci.trafficlight.setRedYellowGreenState(junction, phase_state)
     traci.trafficlight.setPhaseDuration(junction, phase_time)
 
 
-def get_phase_index(red_yellow_green_state):
-    """
-    Converts the red-yellow-green state string to a corresponding phase index.
-
-    Args:
-        red_yellow_green_state (str): The RYG state string from traci.trafficlight.getRedYellowGreenState()
-
-    Returns:
-        int: The corresponding phase index (0, 1, 2, or 3)
-    """
-
-    phase_map = {
-        "GGGrrrrrrrrr": 0,
-        "rrrGGGrrrrrr": 1,
-        "rrrrrrGGGrrr": 2,
-        "rrrrrrrrrGGG": 3,
-    }
-
-    return phase_map.get(red_yellow_green_state, None)  # Return None for unknown states
-
-
-def get_phase_indices_for_junctions(junction_ids):
-    """
-    Retrieves the phase indices for multiple junctions in the desired string format.
-
-    Args:
-        junction_ids (list): A list of traffic light IDs.
-
-    Returns:
-        str: A comma-separated string of junction index.phase index pairs.
-    """
-
-    phase_indices_str = []
-    for index, junction_id in enumerate(junction_ids, start=1):
-        current_phase_string = traci.trafficlight.getRedYellowGreenState(junction_id)
-        phase_index = get_phase_index(current_phase_string)
-        phase_indices_str.append(f"{index}.{phase_index}")  # Format as string
-
-    return ",".join(phase_indices_str)  # Join strings with commas
-
-
-
-
-junction_ids = ['gneJ3', 'gneJ7','gneJ11']
 
 class Model(nn.Module):
     def __init__(self, lr, input_dims, fc1_dims, fc2_dims, n_actions):
@@ -304,9 +282,9 @@ class Agent:
 
 def run(train=True,model_name="model",epochs=50,steps=500,ard=False):
     if ard:
-        arduino = serial.Serial(port='COM1', baudrate=9600, timeout=.1)
+        arduino = serial.Serial(port='COM4', baudrate=9600, timeout=.1)
         def write_read(x):
-            arduino.write(bytes(str(x), 'utf-8'))
+            arduino.write(bytes(x, 'utf-8'))
             time.sleep(0.05)
             data = arduino.readline()
             return data
@@ -315,7 +293,6 @@ def run(train=True,model_name="model",epochs=50,steps=500,ard=False):
     steps = steps
     best_time = np.inf
     total_time_list = list()
-    CO2Emission_list = list()
     traci.start(
         [checkBinary("sumo"), "-c", "configuration.sumocfg", "--tripinfo-output", "maps/tripinfo.xml"]
     )
@@ -367,7 +344,6 @@ def run(train=True,model_name="model",epochs=50,steps=500,ard=False):
 
         step = 0
         total_time = 0
-        total_CO2Emission = 0
         min_duration = 5
         
         traffic_lights_time = dict()
@@ -375,8 +351,7 @@ def run(train=True,model_name="model",epochs=50,steps=500,ard=False):
         prev_vehicles_per_lane = dict()
         prev_action = dict()
         all_lanes = list()
-        states = dict()
-        List_Selected_Lanes = [0,0,0,0]
+        
         for junction_number, junction in enumerate(all_junctions):
             prev_wait_time[junction] = 0
             prev_action[junction_number] = 0
@@ -391,60 +366,39 @@ def run(train=True,model_name="model",epochs=50,steps=500,ard=False):
                 controled_lanes = traci.trafficlight.getControlledLanes(junction)
                 waiting_time = get_waiting_time(controled_lanes)
                 total_time += waiting_time
-                CO2Emissio_value = get_CO2Emission(controled_lanes)
-                total_CO2Emission += CO2Emissio_value
                 if traffic_lights_time[junction] == 0:
-                    states = Read_From_MC(port='COM2', baud_rate=9600,number=junction_number)
-                    if(None == states):
-                        vehicles_per_lane = [0,0,0,0]
-                    else :
-                        vehicles_per_lane = states
+                    vehicles_per_lane = get_vehicle_numbers(controled_lanes)
                     # vehicles_per_lane = get_vehicle_numbers(all_lanes)
-                    delay_ms(15)
-                    print(f"vehicles_per_lane from MC for Junction {junction_number} = {vehicles_per_lane}")
+
                     #storing previous state and current state
                     reward = -1 *  waiting_time
-                    state_ =  vehicles_per_lane
+                    # state_ = request_array(array_id= junction_number,port= 'COM7',baud_rate= 115200) 
+                    state_ = request_array(array_id= (junction_number + 1),port= 'COM7',baud_rate= 115200) 
                     state = prev_vehicles_per_lane[junction_number]
                     prev_vehicles_per_lane[junction_number] = state_
                     brain.store_transition(state, state_, prev_action[junction_number],reward,(step==steps),junction_number)
-                    
+
                     #selecting new action based on current state
                     lane = brain.choose_action(state_)
-                    # print(f"Junction number = {junction_number}")
-                    # if (lane == 1):
-                    #    List_Selected_Lanes[junction_number] = 1
-                    # elif (lane == 2):
-                    #    List_Selected_Lanes[junction_number] = 2
-                    # elif (lane == 3):
-                    #    List_Selected_Lanes[junction_number] = 3
-                    # elif (lane == 0):
-                    #    List_Selected_Lanes[junction_number] = 0
-                    # else :
-                    #     print(f"lane = {lane}")           
+                    Send_variable(action_id= junction_number +1,action= lane,port='COM7',baud_rate= 115200)
                     prev_action[junction_number] = lane
                     phaseDuration(junction, 6, select_lane[lane][0])
                     phaseDuration(junction, min_duration + 10, select_lane[lane][1])
-                    if (junction_number == 4):
-                        selected_lanes_list = list(prev_action.values())
-                        # send_data_to_arduino(data_list=selected_lanes_list,arduino_port="COM1",baud_rate=9600)        
-                        print(f"Selected Lanes = {selected_lanes_list}")
+
                     if ard:
-                            phase_indices_by_junction = get_phase_indices_for_junctions(junction_ids)
-                            write_read(phase_indices_by_junction)
-                            write_read("\n")
-                            print(phase_indices_by_junction)
+                        ph = str(traci.trafficlight.getPhase("0"))
+                        value = write_read(ph)
+
                     traffic_lights_time[junction] = min_duration + 10
+                    # print(f"action = {list(prev_action.values())}")
+                    # send_data_over_serial('COM7',115200,prev_action.values())
                     if train:
-                        brain.learn(junction_number)    
+                        brain.learn(junction_number)
                 else:
-                    traffic_lights_time[junction] -= 1 
-            
+                    traffic_lights_time[junction] -= 1
             step += 1
         print("total_time",total_time)
-        print("Total_emssiom",total_CO2Emission)
         total_time_list.append(total_time)
-        CO2Emission_list.append(total_CO2Emission)
 
         if total_time < best_time:
             best_time = total_time
@@ -456,23 +410,11 @@ def run(train=True,model_name="model",epochs=50,steps=500,ard=False):
         if not train:
             break
     if train:
-        # Plot the first curve
-        plt.plot(list(range(len(total_time_list))), total_time_list)
+        plt.plot(list(range(len(total_time_list))),total_time_list)
         plt.xlabel("epochs")
         plt.ylabel("total time")
-        plt.title("Total Time vs Epochs")  # Add a title for clarity
-        plt.grid(True)  # Add grid for better visualization
         plt.savefig(f'plots/time_vs_epoch_{model_name}.png')
-        plt.close()  # Close the current figure to create a new one for the next curve
-
-        # Plot the second curve
-        plt.plot(list(range(len(CO2Emission_list))), CO2Emission_list)
-        plt.xlabel("epochs")
-        plt.ylabel("CO2Emission")
-        plt.title("CO2 Emission vs Epochs")  # Add a title for clarity
-        plt.grid(True)  # Add grid for better visualization
-        plt.savefig(f'plots/CO2Emission_vs_epoch_{model_name}.png')
-        plt.show()  # Optional: Show the plot for visual inspection
+        plt.show()
 
 def get_options():
     optParser = optparse.OptionParser()
