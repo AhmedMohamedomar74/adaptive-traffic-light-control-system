@@ -1,5 +1,0 @@
-serial
-numpy
-matplotlib
-sumo
-traci
