@@ -1,29 +1,74 @@
+# Advanced Adaptive Traffic Light Control System
 
-```mermaid
-graph TD;
-    A[Setup] -->|Initialize serial communication| B(Serial.begin(9600));
-    A -->|Initialize Bluetooth| C(Bluetooth_setup);
-    A -->|Setup Traffic Lights| D(setupTrafficLights);
-    A -->|Setup Timer| E(timer_setup);
+This repository contains the Advanced Adaptive Traffic Light Control System, which uses machine learning and microcontroller technologies to manage traffic lights more efficiently and adaptively. This system is designed to handle complex traffic scenarios, dynamically adjusting the duration of each traffic light phase based on real-time conditions.
 
-    F[Loop] -->|Setup State| G(State_setup);
-    F -->|Get State Array| H(getStateArray);
-    F -->|Get New State| I(GET_NEW_STATE(stateArray));
-    F -->|Check Timer| J{isTimerElapsed};
+## Overview
 
-    J -->|Timer Elapsed| K[Handle Action Yellow(action[0])];
-    J -->|Print State Array| L[Serial.print("this is state = {", stateArray[0], ",", stateArray[1], ",", stateArray[2], ",", stateArray[3], "}");];
+The system leverages machine learning models and ESP microcontrollers to manage traffic lights at intersections. The key features of this version include handling complex maps with multiple lanes and dynamically calculating the duration of each traffic light phase based on the current traffic situation. The communication network is enhanced with Bluetooth, ensuring robust and flexible connectivity.
 
-    I -->|New Data Received| M{receivedData[0]};
-    M -->|State| N[SerialBT.write(State_arr, 4)];
-    M -->|Action| O[Handle Action Green(action[0])];
-    O -->|Set Timer| P[timer_seconds(action[1] - 2)];
-    O -->|Serial Write| Q[Serial.write("The action is for lane ")];
-    O -->|Serial Print| R[Serial.print(action[0])];
-    O -->|Serial Write Duration| S[Serial.write("For Duration = ")];
-    O -->|Serial Print Duration| T[Serial.println(action[1])];
+### GIF Demonstration
 
-    style A fill:#f9f,stroke:#333,stroke-width:4px;
-    style F fill:#ff9,stroke:#333,stroke-width:4px;
-    style J fill:#9f9,stroke:#333,stroke-width:4px;
-    style M fill:#9ff,stroke:#333,stroke-width:4px;
+![System Integration](Documentation\Smart_Traffic_light_&_congestion_control_based.gif)
+
+## Complex Junction Example
+
+The new version of the model is capable of handling complex junctions with intricate lane structures. Below is an example of such a complex junction that the system can manage:
+
+![Complex Junction](Documentation/complex_junction_example.png)
+
+## Key Features
+
+1. **Complex Map Handling**: The model can manage junctions with multiple lanes, making it suitable for more intricate traffic networks.
+2. **Dynamic Phase Duration**: The system calculates the duration of each traffic light phase based on the number of cars, providing an adaptive response to real-time traffic conditions.
+3. **Bluetooth Integration**: The communication network now includes Bluetooth for enhanced connectivity between components.
+
+## System Components
+
+- **ESP Microcontrollers**: Manage the traffic lights and communicate with the central control system.
+- **Machine Learning Model**: Analyzes real-time traffic data and determines the optimal traffic light durations.
+- **Communication Network**: Utilizes Bluetooth for robust and flexible connectivity between microcontrollers and the central system.
+
+## Installation and Setup
+
+### Prerequisites
+
+- SUMO (Simulation of Urban MObility) for traffic simulation.
+- Python 3.8 and necessary libraries (see `requirements.txt` for dependencies).
+- ESP microcontrollers with Bluetooth capabilities.
+- Appropriate hardware setup for the communication network.
+
+### Installation
+
+1. **Clone the Repository**:
+   ```bash
+   git clone https://github.com/AhmedMohamedomar74/adaptive-traffic-light-control-system.git
+   cd adaptive-traffic-light-control-system/V2
+2. **Install Dependencies**:
+   ```bash
+   pip install -r requirements.txt
+
+3. **SUMO GUI**:
+   Download and install the SUMO GUI from [the official website](https://sumo.dlr.de/docs/Downloads.php) if you 
+   haven't already.
+
+### Hardware Setup
+1. **Microcontroller Configuration**:
+    Configure the ESP microcontrollers with the provided code. Ensure the Bluetooth
+2. **Network Configuration**:
+    Set up the communication network between microcontrollers and the central system using Bluetooth
+### Running the System
+1. **Power on the Microcontrollers**:
+    Ensure all microcontrollers are properly connected and powered on.
+2. **Run the Control Script**:
+    Set up the communication network between microcontrollers and the central system using Bluetooth
+    ```bash
+    python train.py
+3. **Running the Advanced Model**:
+    To run the advanced model, use the following command:
+    ```bash
+    python train_adv.py
+    
+Additionally, you need to modify the configuration file:
+- Replace `city1` with `osm` in the configuration file to match the advanced model's requirements.
+
+
