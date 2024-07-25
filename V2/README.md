@@ -8,7 +8,7 @@ The system leverages machine learning models and ESP microcontrollers to manage 
 
 ### GIF Demonstration
 
-![System Integration](Documentation\Smart_Traffic_light_&_congestion_control_based.gif)
+![System Integration](Documentation/Smart_Traffic_light_&_congestion_control_based.gif)
 
 ## Complex Junction Example
 
