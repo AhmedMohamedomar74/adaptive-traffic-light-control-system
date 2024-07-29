@@ -4,8 +4,8 @@ This repository features two versions of a traffic light control system designed
 
 ## Versions
 
-- **[Version 1: Advanced Traffic Light Management with Embedded I2C Networking]([link_to_version_1_README](https://github.com/AhmedMohamedomar74/adaptive-traffic-light-control-system/tree/main/V1))**
-- **[Version 2: Advanced Adaptive Traffic Light Control with Bluetooth]([link_to_version_2_README](https://github.com/AhmedMohamedomar74/adaptive-traffic-light-control-system/tree/main/V2))**
+- **[Version 1: Advanced Traffic Light Management with Embedded I2C Networking](https://github.com/AhmedMohamedomar74/adaptive-traffic-light-control-system/tree/main/V1)**
+- **[Version 2: Advanced Adaptive Traffic Light Control with Bluetooth](https://github.com/AhmedMohamedomar74/adaptive-traffic-light-control-system/tree/main/V2)**
 
 ### Problem
 
